@@ -271,12 +271,6 @@
     </footer>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=1.1').catch(err => console.error('SW failed:', err));
-            });
-        }
-
         const STATIONS = [
             { id: 4, name: "ILove Dance", url: "https://streams.ilovemusic.de/iloveradio2.mp3", color: "from-pink-600 to-blue-600", ambient: "#db2777" },
             { id: 2, name: "ILove Trance", url: "https://streams.ilovemusic.de/iloveradio10.mp3", color: "from-blue-400 to-blue-800", ambient: "#1e40af" },
@@ -427,7 +421,7 @@
 
         function resumeLocal() { if(state.localFiles.length) playSource(state.localFiles[0]); }
 
-        function updateEQ(save = true, activeBtnId = null) {
+        function updateEQ(save = true) {
             if (!bassNode) return;
             bassNode.gain.value = document.getElementById('eq-bass').value;
             midNode.gain.value = document.getElementById('eq-mid').value;
@@ -436,20 +430,26 @@
             document.getElementById('v-mid').innerText = midNode.gain.value + 'dB';
             document.getElementById('v-treble').innerText = trebleNode.gain.value + 'dB';
             
+            // Logic to track if active and set generic blue glow if manual
             const isEQActive = bassNode.gain.value != 0 || midNode.gain.value != 0 || trebleNode.gain.value != 0;
-            if (activeBtnId === null) {
+            if (!isEQActive) {
                 resetPresetButtons();
-                state.eqColor = isEQActive ? 'text-blue-500' : 'text-gray-500';
+                state.eqColor = 'text-gray-500';
+            } else if (state.eqColor === 'text-gray-500') {
+                // If turning on EQ manually, default to blue glow
+                state.eqColor = 'text-blue-500';
             }
+            
             render();
-            if(save) localStorage.setItem('eq-settings', JSON.stringify({ b: bassNode.gain.value, m: midNode.gain.value, t: trebleNode.gain.value }));
+            if(save) localStorage.setItem('eq-settings', JSON.stringify({ b: bassNode.gain.value, m: midNode.gain.value, t: trebleNode.gain.value, color: state.eqColor }));
         }
 
         function loadSavedEQ() {
-            const saved = JSON.parse(localStorage.getItem('eq-settings')) || {b:0, m:0, t:0};
+            const saved = JSON.parse(localStorage.getItem('eq-settings')) || {b:0, m:0, t:0, color: 'text-gray-500'};
             document.getElementById('eq-bass').value = saved.b;
             document.getElementById('eq-mid').value = saved.m;
             document.getElementById('eq-treble').value = saved.t;
+            state.eqColor = saved.color;
             updateEQ(false);
         }
 
@@ -473,7 +473,7 @@
             btn.classList.add(btnId === 'preset-techno' ? 'bg-blue-600' : btnId === 'preset-dance' ? 'bg-pink-600' : 'bg-cyan-600');
             
             state.eqColor = colorClass;
-            updateEQ(true, btnId);
+            updateEQ(true);
         }
 
         function nextVizMode(e) { e.preventDefault(); state.vizMode = (state.vizMode + 1) % 3; }
@@ -522,9 +522,11 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
-            lucide.createIcons();
+            // Icon color update logic
             const eqIcon = document.getElementById('eq-icon');
-            eqIcon.className = `w-5 h-5 group-hover:text-blue-400 ${state.eqColor}`;
+            eqIcon.className = `w-5 h-5 transition-colors duration-300 ${state.eqColor}`;
+            
+            lucide.createIcons();
         }
 
         window.onkeydown = (e) => {
