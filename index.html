@@ -49,6 +49,11 @@
             background: transparent !important;
         }
 
+        /* Illumination Effect */
+        .eq-glow {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
         @keyframes rotate-disc { 
             from { transform: rotate(0deg); } 
             to { transform: rotate(360deg); } 
@@ -264,7 +269,7 @@
                 <i data-lucide="moon" class="w-5 h-5"></i>
             </button>
             <button id="toggle-eq" class="p-2 md:p-3 rounded-xl transition-all group tooltip" data-tip="Sound Equalizer">
-                <i data-lucide="sliders-horizontal" class="w-5 h-5 group-hover:text-blue-400" id="eq-icon"></i>
+                <i data-lucide="sliders-horizontal" id="eq-icon" class="w-5 h-5 text-gray-500 transition-colors duration-300"></i>
             </button>
             <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" class="hidden sm:block w-20 md:w-32 accent-blue-500">
         </div>
@@ -520,8 +525,13 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
+            // Illumination Logic
             const eqIcon = document.getElementById('eq-icon');
-            eqIcon.className = `w-5 h-5 transition-colors duration-300 ${state.eqColor}`;
+            eqIcon.classList.remove('text-gray-500', 'text-blue-500', 'text-pink-500', 'text-cyan-500', 'eq-glow');
+            eqIcon.classList.add(state.eqColor);
+            if (state.eqColor !== 'text-gray-500') {
+                eqIcon.classList.add('eq-glow');
+            }
             
             lucide.createIcons();
         }
