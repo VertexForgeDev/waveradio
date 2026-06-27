@@ -124,8 +124,8 @@
                     <button onclick="setSleepTimer()" class="w-full mt-2 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Start Sleep Timer</button>
                 </div>
                 <div class="pt-4 border-t border-white/10">
-                    <label class="text-[10px] uppercase font-bold text-gray-400">Alarm Clock (HH:MM)</label>
-                    <input type="time" id="alarm-input" class="w-full bg-black border border-white/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-green-500">
+                    <label class="text-[10px] uppercase font-bold text-gray-400">Alarm Clock (Date & Time)</label>
+                    <input type="datetime-local" id="alarm-input" class="w-full bg-black border border-white/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-green-500">
                     <button onclick="setAlarm()" class="w-full mt-2 bg-green-600 hover:bg-green-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Set Alarm</button>
                 </div>
             </div>
@@ -320,25 +320,25 @@
         }
 
         function setAlarm() {
-            state.alarmTime = document.getElementById('alarm-input').value;
-            if(state.alarmTime) {
+            const alarmValue = document.getElementById('alarm-input').value; 
+            if(alarmValue) {
+                state.alarmTime = new Date(alarmValue).getTime(); 
                 document.getElementById('sleep-btn').classList.add('text-green-400');
                 closeTimerModal();
-                alert(`Alarm set for ${state.alarmTime}`);
+                alert(`Alarm set for ${new Date(state.alarmTime).toLocaleString()}`);
             }
         }
 
         setInterval(() => {
             if(state.alarmTime) {
-                const now = new Date();
-                const hhmm = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-                if(hhmm === state.alarmTime && !state.isPlaying) {
+                const now = new Date().getTime();
+                if(now >= state.alarmTime && !state.isPlaying) {
                     togglePlay();
                     state.alarmTime = null; 
                     document.getElementById('sleep-btn').classList.remove('text-green-400');
                 }
             }
-        }, 30000);
+        }, 10000);
 
         function initAudio() {
             if (audioCtx) return;
@@ -430,13 +430,11 @@
             document.getElementById('v-mid').innerText = midNode.gain.value + 'dB';
             document.getElementById('v-treble').innerText = trebleNode.gain.value + 'dB';
             
-            // Logic to track if active and set generic blue glow if manual
             const isEQActive = bassNode.gain.value != 0 || midNode.gain.value != 0 || trebleNode.gain.value != 0;
             if (!isEQActive) {
                 resetPresetButtons();
                 state.eqColor = 'text-gray-500';
             } else if (state.eqColor === 'text-gray-500') {
-                // If turning on EQ manually, default to blue glow
                 state.eqColor = 'text-blue-500';
             }
             
@@ -522,7 +520,6 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
-            // Icon color update logic
             const eqIcon = document.getElementById('eq-icon');
             eqIcon.className = `w-5 h-5 transition-colors duration-300 ${state.eqColor}`;
             
