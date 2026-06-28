@@ -28,14 +28,17 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        :root { --app-height: 100%; }
+        :root { --app-height: 100%; --bg-body: #000000; --bg-panel: rgba(3, 7, 18, 0.8); --bg-modal: #111827; --text-main: #f3f4f6; --border-col: rgba(255,255,255,0.1); }
+        .light { --bg-body: #f3f4f6; --bg-panel: rgba(255, 255, 255, 0.8); --bg-modal: #e5e7eb; --text-main: #111827; --border-col: rgba(0,0,0,0.1); }
         
         html, body {
             overflow: hidden !important;
             height: 100%;
             position: fixed;
             width: 100%;
-            transition: background 1.5s ease;
+            transition: background 1.5s ease, color 0.3s ease;
+            background-color: var(--bg-body);
+            color: var(--text-main);
         }
 
         .no-scrollbar {
@@ -87,7 +90,7 @@
 
         input[type=range].progress-slider {
             -webkit-appearance: none;
-            background: rgba(255,255,255,0.15);
+            background: rgba(128,128,128,0.3);
             border-radius: 5px;
         }
         input[type=range].progress-slider::-webkit-slider-thumb {
@@ -97,7 +100,7 @@
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
-            border: 2px solid #000;
+            border: 2px solid var(--bg-body);
             box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
         }
 
@@ -133,24 +136,24 @@
     </style>
 </head>
 
-<body class="flex flex-col bg-black text-gray-100 font-sans">
+<body class="flex flex-col font-sans" style="background-color: var(--bg-body); color: var(--text-main);">
     
     <div id="timer-modal" class="modal hidden">
-        <div class="bg-gray-900 border border-white/10 p-6 rounded-2xl w-80 shadow-2xl">
-            <h2 class="text-lg font-bold mb-4 uppercase text-white">Control Center</h2>
+        <div style="background-color: var(--bg-modal); border-color: var(--border-col);" class="border p-6 rounded-2xl w-80 shadow-2xl">
+            <h2 class="text-lg font-bold mb-4 uppercase">Control Center</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="text-[10px] uppercase font-bold text-gray-400">Sleep Timer (minutes)</label>
-                    <input type="number" id="sleep-input" value="30" class="w-full bg-black border border-white/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-blue-500">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Sleep Timer (minutes)</label>
+                    <input type="number" id="sleep-input" value="30" class="w-full bg-black/10 border border-black/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-blue-500">
                     <button onclick="setSleepTimer()" class="w-full mt-2 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Start Sleep Timer</button>
                 </div>
-                <div class="pt-4 border-t border-white/10">
-                    <label class="text-[10px] uppercase font-bold text-gray-400">Alarm Clock (Date & Time)</label>
-                    <input type="datetime-local" id="alarm-input" class="w-full bg-black border border-white/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-green-500">
+                <div class="pt-4 border-t" style="border-color: var(--border-col);">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Alarm Clock (Date & Time)</label>
+                    <input type="datetime-local" id="alarm-input" class="w-full bg-black/10 border border-black/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-green-500">
                     <button onclick="setAlarm()" class="w-full mt-2 bg-green-600 hover:bg-green-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Set Alarm</button>
                 </div>
             </div>
-            <button onclick="closeTimerModal()" class="w-full mt-4 text-gray-500 text-xs uppercase font-bold hover:text-white transition-colors">Close</button>
+            <button onclick="closeTimerModal()" class="w-full mt-4 text-gray-500 text-xs uppercase font-bold hover:opacity-80 transition-colors">Close</button>
         </div>
     </div>
 
@@ -159,8 +162,8 @@
     <audio id="noise-player" loop src="https://www.soundjay.com/misc/sounds/record-player-static-01.mp3"></audio>
 
     <div class="flex flex-1 overflow-hidden relative z-10">
-        <aside class="w-16 md:w-56 bg-gray-950/80 backdrop-blur-xl border-r border-white/5 flex flex-col shrink-0 relative">
-            <div class="p-4 flex items-center gap-3 border-b border-white/5 justify-center md:justify-start">
+        <aside style="background-color: var(--bg-panel); border-color: var(--border-col);" class="w-16 md:w-56 backdrop-blur-xl border-r flex flex-col shrink-0 relative">
+            <div class="p-4 flex items-center gap-3 border-b justify-center md:justify-start" style="border-color: var(--border-col);">
                 <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-900/20">
                     <i data-lucide="disc-3" id="logo-icon" class="w-5 h-5 text-white"></i>
                 </div>
@@ -169,13 +172,13 @@
             
             <nav class="p-3 space-y-4 flex-1 overflow-y-auto no-scrollbar">
                 <div>
-                    <div class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 bg-white/5 text-blue-400 rounded-xl">
+                    <div class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 bg-black/5 rounded-xl text-blue-500">
                         <i data-lucide="radio-receiver" class="w-5 h-5"></i>
-                        <span class="hidden md:block font-bold uppercase text-[10px] tracking-widest text-white">Signal Source</span>
+                        <span class="hidden md:block font-bold uppercase text-[10px] tracking-widest">Signal Source</span>
                     </div>
                     <div id="sidebar-now-playing" class="hidden md:block mt-4 px-3 py-3 border-l-2 border-blue-500 bg-blue-500/5 rounded-r-lg">
                         <p class="text-[8px] font-black uppercase text-blue-500 mb-1">Now Playing</p>
-                        <p id="sidebar-source-name" class="text-[10px] font-bold text-gray-300 truncate uppercase tracking-tighter italic">Waiting...</p>
+                        <p id="sidebar-source-name" class="text-[10px] font-bold truncate uppercase tracking-tighter italic">Waiting...</p>
                     </div>
                 </div>
             </nav>
@@ -189,23 +192,23 @@
 
             <div id="station-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 xl:grid-cols-12 gap-3 mb-6"></div>
 
-            <div class="mb-8 bg-white/5 border border-white/5 rounded-2xl p-4 space-y-4">
+            <div class="mb-8 border rounded-2xl p-4 space-y-4" style="border-color: var(--border-col);">
                 <div>
                     <h3 class="text-[10px] font-black uppercase text-gray-500 mb-2 flex items-center gap-2">
                         <i data-lucide="link-2" class="w-3 h-3"></i> External Source
                     </h3>
                     <div class="flex flex-wrap md:flex-nowrap gap-2">
-                        <input type="text" id="custom-url" placeholder="URL..." class="flex-1 min-w-[120px] bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-blue-500">
-                        <button onclick="playCustomUrl()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase whitespace-nowrap">Load</button>
+                        <input type="text" id="custom-url" placeholder="URL..." class="flex-1 min-w-[120px] bg-black/10 border border-black/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-blue-500">
+                        <button onclick="playCustomUrl()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase whitespace-nowrap text-white">Load</button>
                     </div>
                 </div>
                 
-                <div class="pt-2 border-t border-white/5">
+                <div class="pt-2 border-t" style="border-color: var(--border-col);">
                     <h3 class="text-[10px] font-black uppercase text-gray-500 mb-2 flex items-center gap-2">
                         <i data-lucide="folder-open" class="w-3 h-3"></i> Local Playlist
                     </h3>
                     <div class="flex items-center gap-2">
-                        <label for="file-input" class="cursor-pointer bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-[10px] font-bold uppercase flex items-center gap-2 transition-all">
+                        <label for="file-input" class="cursor-pointer bg-black/10 hover:bg-black/20 px-4 py-2 rounded-xl text-[10px] font-bold uppercase flex items-center gap-2 transition-all">
                             <i data-lucide="upload" class="w-3 h-3"></i> Files
                         </label>
                         <input type="file" id="file-input" accept="audio/*" multiple class="hidden" onchange="loadLocalFiles(event)">
@@ -214,7 +217,7 @@
                 </div>
             </div>
 
-            <div id="viz-container" oncontextmenu="nextVizMode(event)" class="w-full h-32 bg-blue-950/10 rounded-2xl border border-white/5 overflow-hidden relative cursor-pointer mb-6">
+            <div id="viz-container" oncontextmenu="nextVizMode(event)" class="w-full h-32 bg-black/10 rounded-2xl border overflow-hidden relative cursor-pointer mb-6" style="border-color: var(--border-col);">
                 <canvas id="canvas-viz" class="w-full h-full opacity-80"></canvas>
             </div>
 
@@ -225,14 +228,14 @@
                 <div id="history-list" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <div class="mb-10 pt-4 border-t border-white/5">
-                <p class="text-[9px] text-gray-600 uppercase tracking-widest leading-relaxed opacity-50 italic">
+            <div class="mb-10 pt-4 border-t" style="border-color: var(--border-col);">
+                <p class="text-[9px] text-gray-500 uppercase tracking-widest leading-relaxed opacity-50 italic">
                     Non-commercial player. All streams are property of their respective broadcasters.
                 </p>
             </div>
 
-            <div id="eq-panel" class="fixed bottom-32 right-4 w-64 bg-gray-950/95 backdrop-blur-2xl border border-white/10 p-5 rounded-2xl shadow-2xl scale-95 opacity-0 pointer-events-none transition-all duration-300 z-[60]">
-                <h3 class="text-[10px] font-black uppercase text-blue-500 mb-4 border-b border-white/5 pb-2">Equalizer</h3>
+            <div id="eq-panel" style="background-color: var(--bg-panel); border-color: var(--border-col);" class="fixed bottom-32 right-4 w-64 backdrop-blur-2xl border p-5 rounded-2xl shadow-2xl scale-95 opacity-0 pointer-events-none transition-all duration-300 z-[60]">
+                <h3 class="text-[10px] font-black uppercase text-blue-500 mb-4 border-b pb-2" style="border-color: var(--border-col);">Equalizer</h3>
                 <div class="space-y-4 mb-4">
                     <div>
                         <div class="flex justify-between text-[8px] text-gray-500 mb-1"><span>Bass</span><span id="v-bass">0dB</span></div>
@@ -248,15 +251,15 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                    <button id="preset-techno" onclick="setPreset(6,2,5, 'preset-techno', 'text-blue-500')" class="text-[8px] uppercase font-bold bg-white/5 py-2 rounded hover:bg-blue-600 transition-colors">Techno</button>
-                    <button id="preset-dance" onclick="setPreset(5,0,6, 'preset-dance', 'text-pink-500')" class="text-[8px] uppercase font-bold bg-white/5 py-2 rounded hover:bg-pink-600 transition-colors">Dance</button>
-                    <button id="preset-trance" onclick="setPreset(8,-2,7, 'preset-trance', 'text-cyan-500')" class="text-[8px] uppercase font-bold bg-white/5 py-2 rounded hover:bg-cyan-600 transition-colors">Trance</button>
+                    <button id="preset-techno" onclick="setPreset(6,2,5, 'preset-techno', 'text-blue-500')" class="text-[8px] uppercase font-bold bg-black/10 py-2 rounded hover:bg-blue-600 transition-colors">Techno</button>
+                    <button id="preset-dance" onclick="setPreset(5,0,6, 'preset-dance', 'text-pink-500')" class="text-[8px] uppercase font-bold bg-black/10 py-2 rounded hover:bg-pink-600 transition-colors">Dance</button>
+                    <button id="preset-trance" onclick="setPreset(8,-2,7, 'preset-trance', 'text-cyan-500')" class="text-[8px] uppercase font-bold bg-black/10 py-2 rounded hover:bg-cyan-600 transition-colors">Trance</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <footer class="bg-gray-950/90 backdrop-blur-xl border-t border-white/10 fixed bottom-0 w-full z-30 flex flex-col">
+    <footer style="background-color: var(--bg-panel); border-color: var(--border-col);" class="backdrop-blur-xl border-t fixed bottom-0 w-full z-30 flex flex-col">
         <div id="seek-container" class="w-full px-4 md:px-10 flex items-center gap-3 pt-3 opacity-50 pointer-events-none transition-opacity duration-300">
             <span id="time-current" class="text-[10px] font-bold font-mono text-gray-400 w-8 text-right">0:00</span>
             <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1" class="progress-slider flex-1 h-1 md:h-1.5 cursor-pointer">
@@ -270,13 +273,13 @@
                 <div class="flex items-center gap-3 md:gap-6">
                     <div class="hidden md:flex gap-1 items-end h-4 w-8 justify-end" id="bars-left"></div>
                     <div class="flex items-center gap-1 md:gap-4">
-                        <button onclick="playPrev()" class="p-2 text-gray-400 hover:text-white transition-colors">
+                        <button onclick="playPrev()" class="p-2 text-gray-400 hover:opacity-80 transition-colors">
                             <i data-lucide="skip-back" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
                         </button>
-                        <button id="main-play-btn" class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
+                        <button id="main-play-btn" class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-blue-600 text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
                             <i data-lucide="play" class="w-5 h-5 md:w-6 md:h-6 fill-current ml-1"></i>
                         </button>
-                        <button onclick="playNext()" class="p-2 text-gray-400 hover:text-white transition-colors">
+                        <button onclick="playNext()" class="p-2 text-gray-400 hover:opacity-80 transition-colors">
                             <i data-lucide="skip-forward" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
                         </button>
                     </div>
@@ -285,6 +288,9 @@
             </div>
 
             <div class="flex items-center justify-end gap-1 md:gap-3 w-1/4 md:w-1/3">
+                <button onclick="toggleTheme()" class="p-2 text-gray-500 hover:text-blue-500 transition-all tooltip" data-tip="Toggle Theme">
+                    <i data-lucide="sun-moon" class="w-5 h-5"></i>
+                </button>
                 <button onclick="toggleNoise()" id="noise-btn" class="p-2 text-gray-500 hover:text-orange-400 transition-all tooltip" data-tip="Vinyl Noise Filter">
                     <i data-lucide="waves" class="w-5 h-5"></i>
                 </button>
@@ -300,6 +306,12 @@
     </footer>
 
     <script>
+        function toggleTheme() {
+            document.documentElement.classList.toggle('light');
+            localStorage.setItem('theme', document.documentElement.classList.contains('light') ? 'light' : 'dark');
+        }
+        if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+
         const STATIONS = [
             { id: 4, name: "ILove Dance", url: "https://streams.ilovemusic.de/iloveradio2.mp3", color: "from-pink-600 to-blue-600", ambient: "#db2777" },
             { id: 2, name: "ILove Trance", url: "https://streams.ilovemusic.de/iloveradio10.mp3", color: "from-blue-400 to-blue-800", ambient: "#1e40af" },
@@ -533,7 +545,7 @@
             buttons.forEach(id => {
                 const btn = document.getElementById(id);
                 btn.classList.remove('bg-blue-600', 'bg-pink-600', 'bg-cyan-600');
-                btn.classList.add('bg-white/5');
+                btn.classList.add('bg-black/10');
             });
         }
 
@@ -544,7 +556,7 @@
             
             resetPresetButtons();
             const btn = document.getElementById(btnId);
-            btn.classList.remove('bg-white/5');
+            btn.classList.remove('bg-black/10');
             btn.classList.add(btnId === 'preset-techno' ? 'bg-blue-600' : btnId === 'preset-dance' ? 'bg-pink-600' : 'bg-cyan-600');
             
             state.eqColor = colorClass;
@@ -572,16 +584,15 @@
             const all = [...STATIONS, ...customStations];
             document.getElementById('station-grid').innerHTML = all.map(s => `
                 <div onclick='playSource(${JSON.stringify(s)})' class="cursor-pointer group relative">
-                    <div class="relative aspect-square rounded-lg bg-gradient-to-br ${s.color} border ${state.current.url === s.url ? 'border-white' : 'border-white/5'} transition-all overflow-hidden">
+                    <div class="relative aspect-square rounded-lg bg-gradient-to-br ${s.color} border ${state.current.url === s.url ? 'border-white' : 'border-black/20'} transition-all overflow-hidden">
                         ${s.isCustom ? `<button onclick="removeStation('${s.id}', event)" class="absolute top-1 right-1 z-20 p-1 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600/80"><i data-lucide="x" class="w-3 h-3 text-white"></i></button>` : ''}
                         <div class="absolute inset-0 flex items-center justify-center opacity-20"><i data-lucide="disc-3" class="w-10 h-10 ${state.isPlaying && state.current.url === s.url ? 'rotating' : ''}"></i></div>
                     </div>
-                    <h3 class="text-[8px] font-bold text-center mt-1 uppercase text-gray-400 truncate px-1">${s.name}</h3>
+                    <h3 class="text-[8px] font-bold text-center mt-1 uppercase text-gray-500 truncate px-1">${s.name}</h3>
                 </div>`).join('');
             const historyData = JSON.parse(localStorage.getItem('recent-history')) || [];
-            document.getElementById('history-list').innerHTML = historyData.map(s => `<button onclick='playSource(${JSON.stringify(s)}, false)' class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[8px] hover:bg-white/10 transition-all uppercase font-bold">${s.name}</button>`).join('') || '<p class="text-[8px] text-gray-700 italic uppercase">No history...</p>';
+            document.getElementById('history-list').innerHTML = historyData.map(s => `<button onclick='playSource(${JSON.stringify(s)}, false)' class="px-2 py-1 bg-black/10 border border-black/10 rounded text-[8px] hover:bg-black/20 transition-all uppercase font-bold">${s.name}</button>`).join('') || '<p class="text-[8px] text-gray-500 italic uppercase">No history...</p>';
             
-            // Apply Ambient color to "LIVE" text
             if(timeTotal.innerText === "LIVE") {
                 timeTotal.style.color = state.current.ambient;
                 timeTotal.classList.add('eq-glow');
@@ -597,8 +608,8 @@
                     <div class="w-2 h-2 md:w-3 md:h-3 bg-black rounded-full border border-white/20 z-10"></div>
                 </div>
                 <div class="overflow-hidden max-w-[80px] md:max-w-[150px]">
-                    <h4 class="font-bold text-[10px] md:text-sm text-white truncate">${state.current.name}</h4>
-                    <p class="text-[8px] md:text-[10px] text-blue-400 font-black uppercase tracking-widest">${state.isPlaying ? 'On Air' : 'Paused'}</p>
+                    <h4 class="font-bold text-[10px] md:text-sm truncate">${state.current.name}</h4>
+                    <p class="text-[8px] md:text-[10px] text-blue-500 font-black uppercase tracking-widest">${state.isPlaying ? 'On Air' : 'Paused'}</p>
                 </div>`;
             const barHTML = state.isPlaying ? '<div class="music-bar bar-anim"></div><div class="music-bar bar-anim bar-2"></div><div class="music-bar bar-anim bar-3"></div>' : '';
             document.getElementById('bars-left').innerHTML = barHTML; 
@@ -608,8 +619,10 @@
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
             const eqIcon = document.getElementById('eq-icon');
+            // Remove existing color classes and glow before applying new state
             eqIcon.classList.remove('text-gray-500', 'text-blue-500', 'text-pink-500', 'text-cyan-500', 'eq-glow');
             eqIcon.classList.add(state.eqColor);
+            // Re-apply the glow if any color is active
             if (state.eqColor !== 'text-gray-500') {
                 eqIcon.classList.add('eq-glow');
             }
