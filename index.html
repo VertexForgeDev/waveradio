@@ -85,6 +85,22 @@
             border: 1px solid white; 
         }
 
+        input[type=range].progress-slider {
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.15);
+            border-radius: 5px;
+        }
+        input[type=range].progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #000;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+        }
+
         #ambient-glow { 
             position: fixed; 
             inset: 0; 
@@ -165,7 +181,8 @@
             </nav>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar relative pb-32">
+        <!-- Increased pb-40 to make room for taller footer -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar relative pb-40">
             <header class="mb-6">
                 <h2 class="text-3xl font-bold tracking-tight uppercase italic">Pure Electronic</h2>
                 <p class="text-xs text-blue-500 uppercase tracking-[0.3em] mt-2 font-black">High-Energy Only</p>
@@ -215,7 +232,7 @@
                 </p>
             </div>
 
-            <div id="eq-panel" class="fixed bottom-28 right-4 w-64 bg-gray-950/95 backdrop-blur-2xl border border-white/10 p-5 rounded-2xl shadow-2xl scale-95 opacity-0 pointer-events-none transition-all duration-300 z-[60]">
+            <div id="eq-panel" class="fixed bottom-32 right-4 w-64 bg-gray-950/95 backdrop-blur-2xl border border-white/10 p-5 rounded-2xl shadow-2xl scale-95 opacity-0 pointer-events-none transition-all duration-300 z-[60]">
                 <h3 class="text-[10px] font-black uppercase text-blue-500 mb-4 border-b border-white/5 pb-2">Equalizer</h3>
                 <div class="space-y-4 mb-4">
                     <div>
@@ -240,38 +257,48 @@
         </main>
     </div>
 
-    <footer class="h-24 bg-gray-950/90 backdrop-blur-xl border-t border-white/10 px-4 md:px-10 flex items-center justify-between fixed bottom-0 w-full z-30">
-        <div class="flex items-center gap-4 w-1/4 md:w-1/3" id="player-info"></div>
-        
-        <div class="flex flex-col items-center justify-center w-2/4 md:w-1/3">
-            <div class="flex items-center gap-3 md:gap-6">
-                <div class="hidden md:flex gap-1 items-end h-4 w-8 justify-end" id="bars-left"></div>
-                <div class="flex items-center gap-1 md:gap-4">
-                    <button onclick="playPrev()" class="p-2 text-gray-400 hover:text-white transition-colors">
-                        <i data-lucide="skip-back" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
-                    </button>
-                    <button id="main-play-btn" class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
-                        <i data-lucide="play" class="w-5 h-5 md:w-6 md:h-6 fill-current ml-1"></i>
-                    </button>
-                    <button onclick="playNext()" class="p-2 text-gray-400 hover:text-white transition-colors">
-                        <i data-lucide="skip-forward" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
-                    </button>
-                </div>
-                <div class="hidden md:flex gap-1 items-end h-4 w-8" id="bars-right"></div>
-            </div>
+    <footer class="bg-gray-950/90 backdrop-blur-xl border-t border-white/10 fixed bottom-0 w-full z-30 flex flex-col">
+        <!-- Progress / Seek Bar Area -->
+        <div id="seek-container" class="w-full px-4 md:px-10 flex items-center gap-3 pt-3 opacity-50 pointer-events-none transition-opacity duration-300">
+            <span id="time-current" class="text-[10px] font-bold font-mono text-gray-400 w-8 text-right">0:00</span>
+            <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1" class="progress-slider flex-1 h-1 md:h-1.5 cursor-pointer">
+            <span id="time-total" class="text-[10px] font-bold font-mono text-gray-400 w-10">LIVE</span>
         </div>
 
-        <div class="flex items-center justify-end gap-1 md:gap-3 w-1/4 md:w-1/3">
-            <button onclick="toggleNoise()" id="noise-btn" class="p-2 text-gray-500 hover:text-orange-400 transition-all tooltip" data-tip="Vinyl Noise Filter">
-                <i data-lucide="waves" class="w-5 h-5"></i>
-            </button>
-            <button onclick="openTimerModal()" id="sleep-btn" class="p-2 text-gray-500 hover:text-purple-400 transition-all tooltip" data-tip="Timer / Alarm">
-                <i data-lucide="moon" class="w-5 h-5"></i>
-            </button>
-            <button id="toggle-eq" class="p-2 md:p-3 rounded-xl transition-all group tooltip" data-tip="Sound Equalizer">
-                <i data-lucide="sliders-horizontal" id="eq-icon" class="w-5 h-5 text-gray-500 transition-colors duration-300"></i>
-            </button>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" class="hidden sm:block w-20 md:w-32 accent-blue-500">
+        <!-- Main Control Area -->
+        <div class="h-20 px-4 md:px-10 flex items-center justify-between w-full">
+            <div class="flex items-center gap-4 w-1/4 md:w-1/3" id="player-info"></div>
+            
+            <div class="flex flex-col items-center justify-center w-2/4 md:w-1/3">
+                <div class="flex items-center gap-3 md:gap-6">
+                    <div class="hidden md:flex gap-1 items-end h-4 w-8 justify-end" id="bars-left"></div>
+                    <div class="flex items-center gap-1 md:gap-4">
+                        <button onclick="playPrev()" class="p-2 text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="skip-back" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
+                        </button>
+                        <button id="main-play-btn" class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
+                            <i data-lucide="play" class="w-5 h-5 md:w-6 md:h-6 fill-current ml-1"></i>
+                        </button>
+                        <button onclick="playNext()" class="p-2 text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="skip-forward" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
+                        </button>
+                    </div>
+                    <div class="hidden md:flex gap-1 items-end h-4 w-8" id="bars-right"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-1 md:gap-3 w-1/4 md:w-1/3">
+                <button onclick="toggleNoise()" id="noise-btn" class="p-2 text-gray-500 hover:text-orange-400 transition-all tooltip" data-tip="Vinyl Noise Filter">
+                    <i data-lucide="waves" class="w-5 h-5"></i>
+                </button>
+                <button onclick="openTimerModal()" id="sleep-btn" class="p-2 text-gray-500 hover:text-purple-400 transition-all tooltip" data-tip="Timer / Alarm">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                </button>
+                <button id="toggle-eq" class="p-2 md:p-3 rounded-xl transition-all group tooltip" data-tip="Sound Equalizer">
+                    <i data-lucide="sliders-horizontal" id="eq-icon" class="w-5 h-5 text-gray-500 transition-colors duration-300"></i>
+                </button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" class="hidden sm:block w-20 md:w-32 accent-blue-500">
+            </div>
         </div>
     </footer>
 
@@ -301,7 +328,59 @@
         const audio = document.getElementById('audio-player');
         const noiseAudio = document.getElementById('noise-player');
         const volSlider = document.getElementById('volume-slider');
+        
+        // Progress Bar UI Elements
+        const seekSlider = document.getElementById('seek-slider');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+        const seekContainer = document.getElementById('seek-container');
+        let isSeeking = false;
+        
         let audioCtx, source, analyser, bassNode, midNode, trebleNode;
+
+        // --- Seekbar and Timer Logic ---
+        function formatTime(secs) {
+            if (isNaN(secs) || !isFinite(secs)) return "0:00";
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (isFinite(audio.duration) && audio.duration > 0) {
+                // If it's a file with a known length
+                seekSlider.max = audio.duration;
+                timeTotal.innerText = formatTime(audio.duration);
+                seekContainer.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                // If it's a live radio stream
+                seekSlider.max = 100;
+                seekSlider.value = 0;
+                timeTotal.innerText = "LIVE";
+                timeCurrent.innerText = "0:00";
+                seekContainer.classList.add('opacity-50', 'pointer-events-none');
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!isSeeking && isFinite(audio.duration) && audio.duration > 0) {
+                seekSlider.value = audio.currentTime;
+                timeCurrent.innerText = formatTime(audio.currentTime);
+            } else if (!isFinite(audio.duration)) {
+                timeCurrent.innerText = formatTime(audio.currentTime); // Show listening duration for live
+            }
+        });
+
+        seekSlider.addEventListener('input', () => {
+            isSeeking = true;
+            timeCurrent.innerText = formatTime(seekSlider.value);
+        });
+
+        seekSlider.addEventListener('change', () => {
+            audio.currentTime = seekSlider.value;
+            isSeeking = false;
+        });
+        // -------------------------------
 
         function animateFavicon() {
             if (!state.isPlaying) return;
