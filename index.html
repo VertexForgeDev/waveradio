@@ -181,7 +181,6 @@
             </nav>
         </aside>
 
-        <!-- Increased pb-40 to make room for taller footer -->
         <main class="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar relative pb-40">
             <header class="mb-6">
                 <h2 class="text-3xl font-bold tracking-tight uppercase italic">Pure Electronic</h2>
@@ -258,14 +257,12 @@
     </div>
 
     <footer class="bg-gray-950/90 backdrop-blur-xl border-t border-white/10 fixed bottom-0 w-full z-30 flex flex-col">
-        <!-- Progress / Seek Bar Area -->
         <div id="seek-container" class="w-full px-4 md:px-10 flex items-center gap-3 pt-3 opacity-50 pointer-events-none transition-opacity duration-300">
             <span id="time-current" class="text-[10px] font-bold font-mono text-gray-400 w-8 text-right">0:00</span>
             <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1" class="progress-slider flex-1 h-1 md:h-1.5 cursor-pointer">
             <span id="time-total" class="text-[10px] font-bold font-mono text-gray-400 w-10">LIVE</span>
         </div>
 
-        <!-- Main Control Area -->
         <div class="h-20 px-4 md:px-10 flex items-center justify-between w-full">
             <div class="flex items-center gap-4 w-1/4 md:w-1/3" id="player-info"></div>
             
@@ -329,7 +326,6 @@
         const noiseAudio = document.getElementById('noise-player');
         const volSlider = document.getElementById('volume-slider');
         
-        // Progress Bar UI Elements
         const seekSlider = document.getElementById('seek-slider');
         const timeCurrent = document.getElementById('time-current');
         const timeTotal = document.getElementById('time-total');
@@ -338,7 +334,6 @@
         
         let audioCtx, source, analyser, bassNode, midNode, trebleNode;
 
-        // --- Seekbar and Timer Logic ---
         function formatTime(secs) {
             if (isNaN(secs) || !isFinite(secs)) return "0:00";
             const m = Math.floor(secs / 60);
@@ -348,17 +343,16 @@
 
         audio.addEventListener('loadedmetadata', () => {
             if (isFinite(audio.duration) && audio.duration > 0) {
-                // If it's a file with a known length
                 seekSlider.max = audio.duration;
                 timeTotal.innerText = formatTime(audio.duration);
                 seekContainer.classList.remove('opacity-50', 'pointer-events-none');
             } else {
-                // If it's a live radio stream
                 seekSlider.max = 100;
                 seekSlider.value = 0;
                 timeTotal.innerText = "LIVE";
                 timeCurrent.innerText = "0:00";
                 seekContainer.classList.add('opacity-50', 'pointer-events-none');
+                render();
             }
         });
 
@@ -367,7 +361,7 @@
                 seekSlider.value = audio.currentTime;
                 timeCurrent.innerText = formatTime(audio.currentTime);
             } else if (!isFinite(audio.duration)) {
-                timeCurrent.innerText = formatTime(audio.currentTime); // Show listening duration for live
+                timeCurrent.innerText = formatTime(audio.currentTime);
             }
         });
 
@@ -380,7 +374,6 @@
             audio.currentTime = seekSlider.value;
             isSeeking = false;
         });
-        // -------------------------------
 
         function animateFavicon() {
             if (!state.isPlaying) return;
@@ -587,6 +580,16 @@
                 </div>`).join('');
             const historyData = JSON.parse(localStorage.getItem('recent-history')) || [];
             document.getElementById('history-list').innerHTML = historyData.map(s => `<button onclick='playSource(${JSON.stringify(s)}, false)' class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[8px] hover:bg-white/10 transition-all uppercase font-bold">${s.name}</button>`).join('') || '<p class="text-[8px] text-gray-700 italic uppercase">No history...</p>';
+            
+            // Apply Ambient color to "LIVE" text
+            if(timeTotal.innerText === "LIVE") {
+                timeTotal.style.color = state.current.ambient;
+                timeTotal.classList.add('eq-glow');
+            } else {
+                timeTotal.style.color = '';
+                timeTotal.classList.remove('eq-glow');
+            }
+
             document.getElementById('sidebar-source-name').innerText = state.current.name;
             document.getElementById('player-info').innerHTML = `
                 <div class="w-10 h-10 md:w-12 md:h-12 rounded-full vinyl-disc flex items-center justify-center ${state.isPlaying ? 'rotating' : ''} shadow-xl overflow-hidden">
@@ -604,7 +607,6 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
-            // Illumination Logic
             const eqIcon = document.getElementById('eq-icon');
             eqIcon.classList.remove('text-gray-500', 'text-blue-500', 'text-pink-500', 'text-cyan-500', 'eq-glow');
             eqIcon.classList.add(state.eqColor);
