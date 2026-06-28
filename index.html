@@ -266,17 +266,17 @@
             <span id="time-total" class="text-[10px] font-bold font-mono text-gray-400 w-10">LIVE</span>
         </div>
 
-        <div class="h-20 px-4 md:px-10 flex items-center justify-between w-full">
-            <div class="flex items-center gap-4 w-1/4 md:w-1/3" id="player-info"></div>
+        <div class="h-20 px-2 md:px-10 flex items-center justify-between w-full">
+            <div class="flex items-center gap-2 md:gap-4 w-1/4 md:w-1/3" id="player-info"></div>
             
             <div class="flex flex-col items-center justify-center w-2/4 md:w-1/3">
-                <div class="flex items-center gap-3 md:gap-6">
+                <div class="flex items-center gap-2 md:gap-6">
                     <div class="hidden md:flex gap-1 items-end h-4 w-8 justify-end" id="bars-left"></div>
                     <div class="flex items-center gap-1 md:gap-4">
                         <button onclick="playPrev()" class="p-2 text-gray-400 hover:opacity-80 transition-colors">
                             <i data-lucide="skip-back" class="w-4 h-4 md:w-5 md:h-5 fill-current"></i>
                         </button>
-                        <button id="main-play-btn" class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-blue-600 text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
+                        <button id="main-play-btn" class="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-blue-600 text-white rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg">
                             <i data-lucide="play" class="w-5 h-5 md:w-6 md:h-6 fill-current ml-1"></i>
                         </button>
                         <button onclick="playNext()" class="p-2 text-gray-400 hover:opacity-80 transition-colors">
@@ -287,20 +287,20 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-1 md:gap-3 w-1/4 md:w-1/3">
-                <button onclick="toggleTheme()" class="p-2 text-gray-500 hover:text-blue-500 transition-all tooltip" data-tip="Toggle Theme">
-                    <i data-lucide="sun-moon" class="w-5 h-5"></i>
+            <div class="flex items-center justify-end gap-0.5 md:gap-3 w-1/4 md:w-1/3 flex-wrap md:flex-nowrap">
+                <button onclick="toggleTheme()" class="p-1.5 md:p-2 text-gray-500 hover:text-blue-500 transition-all tooltip" data-tip="Toggle Theme">
+                    <i data-lucide="sun-moon" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
-                <button onclick="toggleNoise()" id="noise-btn" class="p-2 text-gray-500 hover:text-orange-400 transition-all tooltip" data-tip="Vinyl Noise Filter">
-                    <i data-lucide="waves" class="w-5 h-5"></i>
+                <button onclick="toggleNoise()" id="noise-btn" class="p-1.5 md:p-2 text-gray-500 hover:text-orange-400 transition-all tooltip" data-tip="Vinyl Noise Filter">
+                    <i data-lucide="waves" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
-                <button onclick="openTimerModal()" id="sleep-btn" class="p-2 text-gray-500 hover:text-purple-400 transition-all tooltip" data-tip="Timer / Alarm">
-                    <i data-lucide="moon" class="w-5 h-5"></i>
+                <button onclick="openTimerModal()" id="sleep-btn" class="p-1.5 md:p-2 text-gray-500 hover:text-purple-400 transition-all tooltip" data-tip="Timer / Alarm">
+                    <i data-lucide="moon" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
-                <button id="toggle-eq" class="p-2 md:p-3 rounded-xl transition-all group tooltip" data-tip="Sound Equalizer">
-                    <i data-lucide="sliders-horizontal" id="eq-icon" class="w-5 h-5 text-gray-500 transition-colors duration-300"></i>
+                <button id="toggle-eq" class="p-1.5 md:p-3 rounded-xl transition-all group tooltip" data-tip="Sound Equalizer">
+                    <i data-lucide="sliders-horizontal" id="eq-icon" class="w-4 h-4 md:w-5 md:h-5 text-gray-500 transition-colors duration-300"></i>
                 </button>
-                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" class="hidden sm:block w-20 md:w-32 accent-blue-500">
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" class="hidden sm:block w-16 md:w-32 accent-blue-500">
             </div>
         </div>
     </footer>
@@ -607,9 +607,9 @@
                     <div class="vinyl-reflection"></div>
                     <div class="w-2 h-2 md:w-3 md:h-3 bg-black rounded-full border border-white/20 z-10"></div>
                 </div>
-                <div class="overflow-hidden max-w-[80px] md:max-w-[150px]">
-                    <h4 class="font-bold text-[10px] md:text-sm truncate">${state.current.name}</h4>
-                    <p class="text-[8px] md:text-[10px] text-blue-500 font-black uppercase tracking-widest">${state.isPlaying ? 'On Air' : 'Paused'}</p>
+                <div class="overflow-hidden max-w-[60px] md:max-w-[150px]">
+                    <h4 class="font-bold text-[9px] md:text-sm truncate">${state.current.name}</h4>
+                    <p class="text-[7px] md:text-[10px] text-blue-500 font-black uppercase tracking-widest">${state.isPlaying ? 'On Air' : 'Paused'}</p>
                 </div>`;
             const barHTML = state.isPlaying ? '<div class="music-bar bar-anim"></div><div class="music-bar bar-anim bar-2"></div><div class="music-bar bar-anim bar-3"></div>' : '';
             document.getElementById('bars-left').innerHTML = barHTML; 
@@ -619,10 +619,8 @@
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
             const eqIcon = document.getElementById('eq-icon');
-            // Remove existing color classes and glow before applying new state
             eqIcon.classList.remove('text-gray-500', 'text-blue-500', 'text-pink-500', 'text-cyan-500', 'eq-glow');
             eqIcon.classList.add(state.eqColor);
-            // Re-apply the glow if any color is active
             if (state.eqColor !== 'text-gray-500') {
                 eqIcon.classList.add('eq-glow');
             }
