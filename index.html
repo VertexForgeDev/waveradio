@@ -26,6 +26,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 
     <style>
         :root { --app-height: 100%; --bg-body: #000000; --bg-panel: rgba(3, 7, 18, 0.8); --bg-modal: #111827; --text-main: #f3f4f6; --border-col: rgba(255,255,255,0.1); }
@@ -146,11 +147,29 @@
                     <label class="text-[10px] uppercase font-bold text-gray-500">Sleep Timer (minutes)</label>
                     <input type="number" id="sleep-input" value="30" class="w-full bg-black/10 border border-black/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-blue-500">
                     <button onclick="setSleepTimer()" class="w-full mt-2 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Start Sleep Timer</button>
+                    <div id="sleep-countdown-container" class="mt-2 hidden">
+                        <div class="flex items-center justify-between bg-black/20 rounded-lg p-2 border border-purple-500/20">
+                            <div id="sleep-countdown" class="text-[10px] text-purple-400 font-bold font-mono flex items-center gap-1">
+                                <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+                                <span>Calculating...</span>
+                            </div>
+                            <button onclick="cancelSleepTimer()" class="text-gray-500 hover:text-red-400 text-[9px] uppercase font-black tracking-wider transition-colors">Cancel</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="pt-4 border-t" style="border-color: var(--border-col);">
                     <label class="text-[10px] uppercase font-bold text-gray-500">Alarm Clock (Date & Time)</label>
                     <input type="datetime-local" id="alarm-input" class="w-full bg-black/10 border border-black/10 rounded-lg p-2 text-sm mt-1 focus:outline-none focus:border-green-500">
                     <button onclick="setAlarm()" class="w-full mt-2 bg-green-600 hover:bg-green-500 py-2 rounded-lg font-bold text-xs uppercase transition-all">Set Alarm</button>
+                    <div id="alarm-countdown-container" class="mt-2 hidden">
+                        <div class="flex items-center justify-between bg-black/20 rounded-lg p-2 border border-green-500/20">
+                            <div id="alarm-countdown" class="text-[10px] text-green-400 font-bold font-mono flex items-center gap-1">
+                                <i data-lucide="alarm-clock" class="w-3.5 h-3.5"></i>
+                                <span>Calculating...</span>
+                            </div>
+                            <button onclick="cancelAlarm()" class="text-gray-500 hover:text-red-400 text-[9px] uppercase font-black tracking-wider transition-colors">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button onclick="closeTimerModal()" class="w-full mt-4 text-gray-500 text-xs uppercase font-bold hover:opacity-80 transition-colors">Close</button>
@@ -288,6 +307,12 @@
             </div>
 
             <div class="flex items-center justify-end gap-0.5 md:gap-3 w-1/4 md:w-1/3 flex-wrap md:flex-nowrap">
+                <button onclick="toggleRecording()" id="record-btn" class="p-1.5 md:p-2 text-gray-500 hover:text-red-500 transition-all tooltip" data-tip="Record Stream">
+                    <i data-lucide="circle" id="record-icon" class="w-4 h-4 md:w-5 md:h-5"></i>
+                </button>
+                <button onclick="shareStation()" id="share-btn" class="p-1.5 md:p-2 text-gray-500 hover:text-green-400 transition-all tooltip" data-tip="Share Station">
+                    <i data-lucide="share-2" class="w-4 h-4 md:w-5 md:h-5"></i>
+                </button>
                 <button onclick="toggleTheme()" class="p-1.5 md:p-2 text-gray-500 hover:text-blue-500 transition-all tooltip" data-tip="Toggle Theme">
                     <i data-lucide="sun-moon" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
@@ -328,7 +353,7 @@
             localFiles: [], 
             history: [], 
             isNoiseOn: false, 
-            sleepTimer: null, 
+            sleepEndTime: null, 
             alarmTime: null,
             eqColor: 'text-gray-500' 
         };
@@ -345,12 +370,44 @@
         let isSeeking = false;
         
         let audioCtx, source, analyser, bassNode, midNode, trebleNode;
+        
+        let scriptNode;
+        let mp3Encoder;
+        let mp3Chunks = [];
+        let isRecording = false;
+
+        function loadLocalFiles(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            state.localFiles = Array.from(files).map(file => ({
+                id: 'local-' + Math.random().toString(36).substr(2, 9),
+                name: file.name,
+                url: URL.createObjectURL(file),
+                color: "from-gray-600 to-gray-800",
+                ambient: "#4b5563"
+            }));
+            playSource(state.localFiles[0]);
+            document.getElementById('resume-local-btn').classList.remove('hidden');
+        }
 
         function formatTime(secs) {
             if (isNaN(secs) || !isFinite(secs)) return "0:00";
             const m = Math.floor(secs / 60);
             const s = Math.floor(secs % 60);
             return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- NEW: Helper function to remove stations ---
+        function removeCustomStation(id) {
+            customStations = customStations.filter(s => s.id !== id);
+            localStorage.setItem('custom-stations', JSON.stringify(customStations));
+            if (state.current.id === id) {
+                audio.pause();
+                state.isPlaying = false;
+                state.current = STATIONS[0];
+                audio.src = "";
+            }
+            render();
         }
 
         audio.addEventListener('loadedmetadata', () => {
@@ -398,14 +455,38 @@
         function openTimerModal() { document.getElementById('timer-modal').classList.remove('hidden'); }
         function closeTimerModal() { document.getElementById('timer-modal').classList.add('hidden'); }
 
+        function showToast(message) {
+            let toast = document.getElementById('custom-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'custom-toast';
+                toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold py-3 px-6 rounded-xl shadow-2xl z-[150] opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-2 uppercase tracking-wider text-center';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+            }, 3000);
+        }
+
         function setSleepTimer() {
             const mins = parseInt(document.getElementById('sleep-input').value);
             if(isNaN(mins) || mins <= 0) return;
-            if(state.sleepTimer) clearTimeout(state.sleepTimer);
-            state.sleepTimer = setTimeout(() => { if(state.isPlaying) togglePlay(); }, mins * 60000);
+            state.sleepEndTime = Date.now() + mins * 60000;
             document.getElementById('sleep-btn').classList.add('text-purple-400');
             closeTimerModal();
-            alert(`Sleep timer set for ${mins} minutes.`);
+            showToast(`Sleep timer set for ${mins} minutes.`);
+        }
+
+        function cancelSleepTimer() {
+            state.sleepEndTime = null;
+            document.getElementById('sleep-btn').classList.remove('text-purple-400');
+            document.getElementById('sleep-countdown-container').classList.add('hidden');
+            showToast("Sleep timer cancelled.");
+            render();
         }
 
         function setAlarm() {
@@ -414,20 +495,75 @@
                 state.alarmTime = new Date(alarmValue).getTime(); 
                 document.getElementById('sleep-btn').classList.add('text-green-400');
                 closeTimerModal();
-                alert(`Alarm set for ${new Date(state.alarmTime).toLocaleString()}`);
+                showToast(`Alarm set for ${new Date(state.alarmTime).toLocaleString()}`);
             }
         }
 
+        function cancelAlarm() {
+            state.alarmTime = null;
+            document.getElementById('sleep-btn').classList.remove('text-green-400');
+            document.getElementById('alarm-countdown-container').classList.add('hidden');
+            showToast("Alarm clock cancelled.");
+            render();
+        }
+
         setInterval(() => {
-            if(state.alarmTime) {
-                const now = new Date().getTime();
-                if(now >= state.alarmTime && !state.isPlaying) {
-                    togglePlay();
-                    state.alarmTime = null; 
-                    document.getElementById('sleep-btn').classList.remove('text-green-400');
+            const now = Date.now();
+            let sleepTip = "Timer / Alarm";
+            
+            if (state.sleepEndTime) {
+                const timeLeft = state.sleepEndTime - now;
+                if (timeLeft <= 0) {
+                    state.sleepEndTime = null;
+                    if (state.isPlaying) togglePlay();
+                    document.getElementById('sleep-btn').classList.remove('text-purple-400');
+                    document.getElementById('sleep-countdown-container').classList.add('hidden');
+                    showToast("Sleep timer triggered. Good night!");
+                } else {
+                    const totalSeconds = Math.floor(timeLeft / 1000);
+                    const hrs = Math.floor(totalSeconds / 3600);
+                    const mins = Math.floor((totalSeconds % 3600) / 60);
+                    const secs = totalSeconds % 60;
+                    const timeString = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm ' + secs + 's';
+                    const scEl = document.querySelector('#sleep-countdown span');
+                    if (scEl) scEl.innerText = `${timeString}`;
+                    document.getElementById('sleep-countdown-container').classList.remove('hidden');
+                    sleepTip = `Sleep in: ${timeString}`;
                 }
+            } else {
+                document.getElementById('sleep-countdown-container').classList.add('hidden');
             }
-        }, 10000);
+
+            if (state.alarmTime) {
+                const timeLeft = state.alarmTime - now;
+                if (timeLeft <= 0) {
+                    state.alarmTime = null;
+                    if (!state.isPlaying) togglePlay();
+                    document.getElementById('sleep-btn').classList.remove('text-green-400');
+                    document.getElementById('alarm-countdown-container').classList.add('hidden');
+                    showToast("Alarm triggered! On Air.");
+                } else {
+                    const totalSeconds = Math.floor(timeLeft / 1000);
+                    const hrs = Math.floor(totalSeconds / 3600);
+                    const mins = Math.floor((totalSeconds % 3600) / 60);
+                    const secs = totalSeconds % 60;
+                    const timeString = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm ' + secs + 's';
+                    const acEl = document.querySelector('#alarm-countdown span');
+                    if (acEl) acEl.innerText = `${timeString}`;
+                    document.getElementById('alarm-countdown-container').classList.remove('hidden');
+                    sleepTip = state.sleepEndTime ? `${sleepTip} | Alarm in: ${timeString}` : `Alarm in: ${timeString}`;
+                }
+            } else {
+                document.getElementById('alarm-countdown-container').classList.add('hidden');
+            }
+
+            document.getElementById('sleep-btn').setAttribute('data-tip', sleepTip);
+            if (state.sleepEndTime) document.getElementById('sleep-btn').classList.add('text-purple-400');
+            else document.getElementById('sleep-btn').classList.remove('text-purple-400');
+            
+            if (state.alarmTime) document.getElementById('sleep-btn').classList.add('text-green-400');
+            else document.getElementById('sleep-btn').classList.remove('text-green-400');
+        }, 1000);
 
         function initAudio() {
             if (audioCtx) return;
@@ -437,9 +573,130 @@
             bassNode = audioCtx.createBiquadFilter(); bassNode.type = 'lowshelf'; bassNode.frequency.value = 200;
             midNode = audioCtx.createBiquadFilter(); midNode.type = 'peaking'; midNode.frequency.value = 1000;
             trebleNode = audioCtx.createBiquadFilter(); trebleNode.type = 'highshelf'; trebleNode.frequency.value = 3000;
+            
             source.connect(bassNode).connect(midNode).connect(trebleNode).connect(analyser).connect(audioCtx.destination);
+            
             loadSavedEQ();
             drawViz();
+        }
+
+        function convertFloatToInt16(buffer) {
+            let l = buffer.length;
+            let buf = new Int16Array(l);
+            while (l--) {
+                let s = Math.max(-1, Math.min(1, buffer[l]));
+                buf[l] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            return buf;
+        }
+
+        async function toggleRecording() {
+            initAudio();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            if (!isRecording) {
+                if (!state.isPlaying) {
+                    await togglePlay();
+                }
+
+                if (typeof lamejs === 'undefined') {
+                    showToast('LameJS library is still loading. Please try again.');
+                    return;
+                }
+
+                mp3Chunks = [];
+                const actualSampleRate = audioCtx.sampleRate;
+                mp3Encoder = new lamejs.Mp3Encoder(2, actualSampleRate, 320);
+
+                scriptNode = audioCtx.createScriptProcessor(4096, 2, 2);
+                
+                scriptNode.onaudioprocess = (e) => {
+                    if (!isRecording) return;
+                    
+                    const leftFloat = e.inputBuffer.getChannelData(0);
+                    const rightFloat = e.inputBuffer.getChannelData(1);
+                    
+                    const leftInt16 = convertFloatToInt16(leftFloat);
+                    const rightInt16 = convertFloatToInt16(rightFloat);
+                    
+                    const mp3buf = mp3Encoder.encodeBuffer(leftInt16, rightInt16);
+                    if (mp3buf.length > 0) {
+                        mp3Chunks.push(new Uint8Array(mp3buf));
+                    }
+                };
+
+                analyser.connect(scriptNode);
+                scriptNode.connect(audioCtx.destination);
+
+                isRecording = true;
+                updateRecordButtonUI();
+            } else {
+                isRecording = false;
+                if (scriptNode) {
+                    scriptNode.disconnect();
+                    scriptNode = null;
+                }
+
+                const mp3buf = mp3Encoder.flush();
+                if (mp3buf.length > 0) {
+                    mp3Chunks.push(new Uint8Array(mp3buf));
+                }
+
+                const blob = new Blob(mp3Chunks, { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+
+                const timestamp = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
+                const cleanName = state.current.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                
+                a.download = `waveradio_${cleanName}_${timestamp}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+
+                updateRecordButtonUI();
+            }
+        }
+
+        function updateRecordButtonUI() {
+            const btn = document.getElementById('record-btn');
+            const icon = document.getElementById('record-icon');
+            if (isRecording) {
+                btn.classList.add('text-red-500', 'animate-pulse');
+                btn.classList.remove('text-gray-500');
+                btn.setAttribute('data-tip', 'Stop Recording');
+                icon.setAttribute('data-lucide', 'square');
+            } else {
+                btn.classList.remove('text-red-500', 'animate-pulse');
+                btn.classList.add('text-gray-500');
+                btn.setAttribute('data-tip', 'Record Stream');
+                icon.setAttribute('data-lucide', 'circle');
+            }
+            lucide.createIcons();
+        }
+
+        function shareStation() {
+            const finalShareLink = "https://vertexforgedev.github.io/waveradio/";
+            if (navigator.share) {
+                navigator.share({ title: `WaveRadio - Pure Dance & Trance`, url: finalShareLink }).catch(() => { copyShareFallback(finalShareLink); });
+            } else {
+                copyShareFallback(finalShareLink);
+            }
+        }
+
+        function copyShareFallback(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            try { document.execCommand('copy'); showToast("Share link copied directly to clipboard!"); } catch (err) { showToast("Failed to copy share link automatically."); }
+            document.body.removeChild(el);
         }
 
         function toggleNoise() {
@@ -451,12 +708,13 @@
         async function togglePlay() {
             initAudio();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
-            if (state.isPlaying) { audio.pause(); state.isPlaying = false; }
+            if (state.isPlaying) { audio.pause(); state.isPlaying = false; if (isRecording) await toggleRecording(); }
             else { if (!audio.src || audio.src === window.location.href) audio.src = state.current.url; await audio.play(); state.isPlaying = true; animateFavicon(); }
             render();
         }
 
         async function playSource(s, addToHistory = true) {
+            if (isRecording) await toggleRecording();
             initAudio();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
             state.current = s;
@@ -493,23 +751,6 @@
             document.getElementById('custom-url').value = '';
         }
 
-        function removeStation(id, e) {
-            e.stopPropagation();
-            customStations = customStations.filter(s => s.id !== id);
-            localStorage.setItem('custom-stations', JSON.stringify(customStations));
-            render();
-        }
-
-        function loadLocalFiles(e) {
-            const files = Array.from(e.target.files); 
-            if (!files.length) return;
-            state.localFiles = files.map(f => ({ id: 'l-'+Math.random(), name: f.name.replace(/\.[^/.]+$/, ""), url: URL.createObjectURL(f), color: "from-orange-600 to-red-900", ambient: "#ea580c" }));
-            document.getElementById('resume-local-btn').classList.remove('hidden');
-            playSource(state.localFiles[0]);
-        }
-
-        function resumeLocal() { if(state.localFiles.length) playSource(state.localFiles[0]); }
-
         function updateEQ(save = true) {
             if (!bassNode) return;
             bassNode.gain.value = document.getElementById('eq-bass').value;
@@ -520,13 +761,8 @@
             document.getElementById('v-treble').innerText = trebleNode.gain.value + 'dB';
             
             const isEQActive = bassNode.gain.value != 0 || midNode.gain.value != 0 || trebleNode.gain.value != 0;
-            if (!isEQActive) {
-                resetPresetButtons();
-                state.eqColor = 'text-gray-500';
-            } else if (state.eqColor === 'text-gray-500') {
-                state.eqColor = 'text-blue-500';
-            }
-            
+            if (!isEQActive) { resetPresetButtons(); state.eqColor = 'text-gray-500'; }
+            else if (state.eqColor === 'text-gray-500') { state.eqColor = 'text-blue-500'; }
             render();
             if(save) localStorage.setItem('eq-settings', JSON.stringify({ b: bassNode.gain.value, m: midNode.gain.value, t: trebleNode.gain.value, color: state.eqColor }));
         }
@@ -542,23 +778,15 @@
 
         function resetPresetButtons() {
             const buttons = ['preset-techno', 'preset-dance', 'preset-trance'];
-            buttons.forEach(id => {
-                const btn = document.getElementById(id);
-                btn.classList.remove('bg-blue-600', 'bg-pink-600', 'bg-cyan-600');
-                btn.classList.add('bg-black/10');
-            });
+            buttons.forEach(id => { const btn = document.getElementById(id); btn.classList.remove('bg-blue-600', 'bg-pink-600', 'bg-cyan-600'); btn.classList.add('bg-black/10'); });
         }
 
         function setPreset(b, m, t, btnId, colorClass) { 
-            document.getElementById('eq-bass').value = b; 
-            document.getElementById('eq-mid').value = m; 
-            document.getElementById('eq-treble').value = t; 
-            
+            document.getElementById('eq-bass').value = b; document.getElementById('eq-mid').value = m; document.getElementById('eq-treble').value = t; 
             resetPresetButtons();
             const btn = document.getElementById(btnId);
             btn.classList.remove('bg-black/10');
             btn.classList.add(btnId === 'preset-techno' ? 'bg-blue-600' : btnId === 'preset-dance' ? 'bg-pink-600' : 'bg-cyan-600');
-            
             state.eqColor = colorClass;
             updateEQ(true);
         }
@@ -583,24 +811,23 @@
         function render() {
             const all = [...STATIONS, ...customStations];
             document.getElementById('station-grid').innerHTML = all.map(s => `
-                <div onclick='playSource(${JSON.stringify(s)})' class="cursor-pointer group relative">
-                    <div class="relative aspect-square rounded-lg bg-gradient-to-br ${s.color} border ${state.current.url === s.url ? 'border-white' : 'border-black/20'} transition-all overflow-hidden">
-                        ${s.isCustom ? `<button onclick="removeStation('${s.id}', event)" class="absolute top-1 right-1 z-20 p-1 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600/80"><i data-lucide="x" class="w-3 h-3 text-white"></i></button>` : ''}
+                <div class="group relative">
+                    ${s.isCustom ? `
+                        <button onclick="event.stopPropagation(); removeCustomStation('${s.id}')" 
+                            class="absolute -top-1 -right-1 z-20 bg-red-600 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="x" class="w-3 h-3 text-white"></i>
+                        </button>
+                    ` : ''}
+                    
+                    <div onclick='playSource(${JSON.stringify(s)})' class="cursor-pointer relative aspect-square rounded-lg bg-gradient-to-br ${s.color} border ${state.current.url === s.url ? 'border-white' : 'border-black/20'} transition-all overflow-hidden">
                         <div class="absolute inset-0 flex items-center justify-center opacity-20"><i data-lucide="disc-3" class="w-10 h-10 ${state.isPlaying && state.current.url === s.url ? 'rotating' : ''}"></i></div>
                     </div>
                     <h3 class="text-[8px] font-bold text-center mt-1 uppercase text-gray-500 truncate px-1">${s.name}</h3>
                 </div>`).join('');
+                
             const historyData = JSON.parse(localStorage.getItem('recent-history')) || [];
             document.getElementById('history-list').innerHTML = historyData.map(s => `<button onclick='playSource(${JSON.stringify(s)}, false)' class="px-2 py-1 bg-black/10 border border-black/10 rounded text-[8px] hover:bg-black/20 transition-all uppercase font-bold">${s.name}</button>`).join('') || '<p class="text-[8px] text-gray-500 italic uppercase">No history...</p>';
             
-            if(timeTotal.innerText === "LIVE") {
-                timeTotal.style.color = state.current.ambient;
-                timeTotal.classList.add('eq-glow');
-            } else {
-                timeTotal.style.color = '';
-                timeTotal.classList.remove('eq-glow');
-            }
-
             document.getElementById('sidebar-source-name').innerText = state.current.name;
             document.getElementById('player-info').innerHTML = `
                 <div class="w-10 h-10 md:w-12 md:h-12 rounded-full vinyl-disc flex items-center justify-center ${state.isPlaying ? 'rotating' : ''} shadow-xl overflow-hidden">
@@ -618,13 +845,26 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
+            const isLive = !isFinite(audio.duration) || audio.duration === 0;
+            if (state.isPlaying && isLive) {
+                timeTotal.innerText = "LIVE";
+                timeTotal.style.color = state.current.ambient;
+                timeTotal.classList.add('eq-glow');
+            } else {
+                timeTotal.style.color = '';
+                timeTotal.classList.remove('eq-glow');
+                if (isFinite(audio.duration) && audio.duration > 0) {
+                     timeTotal.innerText = formatTime(audio.duration);
+                }
+            }
+
             const eqIcon = document.getElementById('eq-icon');
             eqIcon.classList.remove('text-gray-500', 'text-blue-500', 'text-pink-500', 'text-cyan-500', 'eq-glow');
             eqIcon.classList.add(state.eqColor);
-            if (state.eqColor !== 'text-gray-500') {
-                eqIcon.classList.add('eq-glow');
-            }
+            if (state.eqColor !== 'text-gray-500') eqIcon.classList.add('eq-glow');
+            updateRecordButtonUI();
             
+            // --- CRITICAL: Manually recreate Lucide icons after rendering new HTML ---
             lucide.createIcons();
         }
 
@@ -643,7 +883,14 @@
         audio.onended = () => playNext(); 
         volSlider.oninput = (e) => audio.volume = e.target.value;
 
-        window.onload = () => { render(); audio.volume = 0.7; volSlider.value = 0.7; const appHeight = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`); window.addEventListener('resize', appHeight); appHeight(); };
+        window.onload = () => {
+            render(); 
+            audio.volume = 0.7; 
+            volSlider.value = 0.7; 
+            const appHeight = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`); 
+            window.addEventListener('resize', appHeight); 
+            appHeight(); 
+        };
     </script>
 </body>
 </html>
