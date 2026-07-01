@@ -35,7 +35,11 @@
         html, body {
             overflow: hidden !important;
             height: 100vh;
+            height: 100dvh;
             width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
             transition: background 1.5s ease, color 0.3s ease;
             background-color: var(--bg-body);
             color: var(--text-main);
@@ -232,7 +236,12 @@
                             <i data-lucide="upload" class="w-3 h-3"></i> Files
                         </label>
                         <input type="file" id="file-input" accept="audio/*" multiple class="hidden" onchange="loadLocalFiles(event)">
-                        <button id="resume-local-btn" class="hidden bg-orange-600/20 text-orange-400 border border-orange-600/30 px-4 py-2 rounded-xl text-[10px] font-bold uppercase" onclick="resumeLocal()">Resume</button>
+                        <div class="flex items-center gap-2">
+                            <button id="resume-local-btn" class="hidden bg-orange-600/20 text-orange-400 border border-orange-600/30 px-4 py-2 rounded-xl text-[10px] font-bold uppercase" onclick="resumeLocal()">Resume</button>
+                            <div id="local-status-indicator" class="hidden">
+                                <i data-lucide="play-circle" class="w-4 h-4 text-green-500 animate-pulse"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -385,7 +394,8 @@
                 name: file.name,
                 url: URL.createObjectURL(file),
                 color: "from-gray-600 to-gray-800",
-                ambient: "#4b5563"
+                ambient: "#4b5563",
+                isLocal: true
             }));
             playSource(state.localFiles[0]);
             document.getElementById('resume-local-btn').classList.remove('hidden');
@@ -851,7 +861,10 @@
                 </div>
                 <div class="overflow-hidden max-w-[60px] md:max-w-[150px]">
                     <h4 class="font-bold text-[9px] md:text-sm truncate">${state.current.name}</h4>
-                    <p class="text-[7px] md:text-[10px] text-blue-500 font-black uppercase tracking-widest">${state.isPlaying ? 'On Air' : 'Paused'}</p>
+                    <p class="text-[7px] md:text-[10px] text-blue-500 font-black uppercase tracking-widest flex items-center gap-1">
+                        ${state.isPlaying ? 'On Air' : 'Paused'}
+                        ${state.current.isLocal ? '<i data-lucide="folder-music" class="w-3 h-3 text-orange-400"></i>' : ''}
+                    </p>
                 </div>`;
             const barHTML = state.isPlaying ? '<div class="music-bar bar-anim"></div><div class="music-bar bar-anim bar-2"></div><div class="music-bar bar-anim bar-3"></div>' : '';
             document.getElementById('bars-left').innerHTML = barHTML; 
@@ -860,6 +873,12 @@
             document.getElementById('main-play-btn').innerHTML = state.isPlaying ? '<i data-lucide="pause" class="fill-current"></i>' : '<i data-lucide="play" class="fill-current ml-1"></i>';
             document.getElementById('ambient-glow').style.background = state.isPlaying ? `radial-gradient(circle at center, ${state.current.ambient} 0%, transparent 70%)` : 'transparent';
             
+            // Toggle local indicator
+            const isLocal = state.current && state.current.isLocal;
+            const indicator = document.getElementById('local-status-indicator');
+            if(isLocal && state.isPlaying) indicator.classList.remove('hidden');
+            else indicator.classList.add('hidden');
+
             const isLive = !isFinite(audio.duration) || audio.duration === 0;
             if (state.isPlaying && isLive) {
                 timeTotal.innerText = "LIVE";
